@@ -15,6 +15,7 @@
  *
 */
 
+#include <ignition/common/Profiler.hh>
 #include <ignition/math/Color.hh>
 #include <ignition/math/Matrix4.hh>
 
@@ -307,12 +308,15 @@ void ApplyWrenchVisual::SetTorque(const ignition::math::Vector3d &_torqueVector,
 ///////////////////////////////////////////////////
 void ApplyWrenchVisual::UpdateForceVisual()
 {
+  IGN_PROFILE("ApplyWrenchVisual::UpdateForceVisual");
+  IGN_PROFILE_BEGIN("Update");
   ApplyWrenchVisualPrivate *dPtr =
       reinterpret_cast<ApplyWrenchVisualPrivate *>(this->dataPtr);
 
   if (!dPtr->forceVisual || !dPtr->rotTool)
   {
     gzwarn << "No force visual" << std::endl;
+    IGN_PROFILE_END();
     return;
   }
 
@@ -337,17 +341,21 @@ void ApplyWrenchVisual::UpdateForceVisual()
   dPtr->rotTool->SetPosition(dPtr->forcePosVector);
   if (!dPtr->rotatedByMouse)
     dPtr->rotTool->SetRotation(quat);
+  IGN_PROFILE_END();
 }
 
 ///////////////////////////////////////////////////
 void ApplyWrenchVisual::UpdateTorqueVisual()
 {
+  IGN_PROFILE("ApplyWrenchVisual::UpdateTorqueVisual");
+  IGN_PROFILE_BEGIN("Update");
   ApplyWrenchVisualPrivate *dPtr =
       reinterpret_cast<ApplyWrenchVisualPrivate *>(this->dataPtr);
 
   if (!dPtr->torqueVisual || !dPtr->rotTool)
   {
     gzwarn << "No torque visual" << std::endl;
+    IGN_PROFILE_END();
     return;
   }
 
@@ -375,11 +383,14 @@ void ApplyWrenchVisual::UpdateTorqueVisual()
   dPtr->rotTool->SetPosition(dPtr->comVector);
   if (!dPtr->rotatedByMouse)
     dPtr->rotTool->SetRotation(quat);
+  IGN_PROFILE_END();
 }
 
 /////////////////////////////////////////////////
 void ApplyWrenchVisual::Resize()
 {
+  IGN_PROFILE("ApplyWrenchVisual::Resize");
+  IGN_PROFILE_BEGIN("Update");
   ApplyWrenchVisualPrivate *dPtr =
       reinterpret_cast<ApplyWrenchVisualPrivate *>(this->dataPtr);
 
@@ -387,6 +398,7 @@ void ApplyWrenchVisual::Resize()
       !dPtr->rotTool)
   {
     gzwarn << "ApplyWrenchVisual is incomplete." << std::endl;
+    IGN_PROFILE_END();
     return;
   }
 
@@ -415,6 +427,7 @@ void ApplyWrenchVisual::Resize()
   dPtr->forceText.SetCharHeight(fontSize);
   dPtr->torqueText.SetCharHeight(fontSize);
   dPtr->forceText.SetBaseline(0.12*linkSize);
+  IGN_PROFILE_END();
 }
 
 ///////////////////////////////////////////////////

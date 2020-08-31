@@ -21,6 +21,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#include <ignition/common/Profiler.hh>
 #include <ignition/math/Helpers.hh>
 #include <sdf/sdf.hh>
 
@@ -421,6 +422,8 @@ void Camera::SetScene(ScenePtr _scene)
 //////////////////////////////////////////////////
 void Camera::Update()
 {
+  IGN_PROFILE("rendering::Camera::Update");
+  IGN_PROFILE_BEGIN("Update");
   std::lock_guard<std::mutex> lock(this->dataPtr->receiveMutex);
 
   // Process all the command messages.
@@ -547,11 +550,14 @@ void Camera::Update()
 
     this->SetWorldPosition(pos);
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////
 void Camera::Render(const bool _force)
 {
+  IGN_PROFILE("rendering::Camera::Render");
+  IGN_PROFILE_BEGIN("Update");
   if (this->initialized && (_force ||
        common::Time::GetWallTime() - this->lastRenderWallTime >=
         this->dataPtr->renderPeriod))
@@ -559,6 +565,7 @@ void Camera::Render(const bool _force)
     this->newData = true;
     this->RenderImpl();
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

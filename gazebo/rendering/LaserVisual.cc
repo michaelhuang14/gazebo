@@ -16,6 +16,7 @@
 */
 
 #include <boost/bind.hpp>
+#include <ignition/common/Profiler.hh>
 
 #include "gazebo/common/MeshManager.hh"
 #include "gazebo/transport/transport.hh"
@@ -89,6 +90,8 @@ void LaserVisual::OnScan(ConstLaserScanStampedPtr &_msg)
 /////////////////////////////////////////////////
 void LaserVisual::Update()
 {
+  IGN_PROFILE("rendering::LaserVisual::Update");
+  IGN_PROFILE_BEGIN("Update");
   LaserVisualPrivate *dPtr =
       reinterpret_cast<LaserVisualPrivate *>(this->dataPtr);
 
@@ -99,11 +102,15 @@ void LaserVisual::Update()
       this->GetRootVisual()->Name() ==
       this->GetScene()->SelectedVisual()->Name()))
   {
+    IGN_PROFILE_END();
     return;
   }
 
   if (!dPtr->laserMsg || !dPtr->receivedMsg)
+  {
+    IGN_PROFILE_END();
     return;
+  }
 
   dPtr->receivedMsg = false;
 
@@ -222,6 +229,7 @@ void LaserVisual::Update()
     }
     verticalAngle += dPtr->laserMsg->scan().vertical_angle_step();
   }
+  IGN_PROFILE_END();
 }
 
 /////////////////////////////////////////////////

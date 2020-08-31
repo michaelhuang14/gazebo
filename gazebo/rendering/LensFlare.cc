@@ -17,6 +17,8 @@
 
 #include <mutex>
 
+#include <ignition/common/Profiler.hh>
+
 #include "gazebo/common/Assert.hh"
 
 #include "gazebo/transport/Node.hh"
@@ -443,6 +445,8 @@ void LensFlare::SetScale(const double _scale)
 //////////////////////////////////////////////////
 void LensFlare::Update()
 {
+  IGN_PROFILE("rendering::LensFlare::Update");
+  IGN_PROFILE_BEGIN("Update");
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
   // remove lens flare if we got a delete msg
   if (this->dataPtr->removeLensFlare)
@@ -451,6 +455,7 @@ void LensFlare::Update()
     this->dataPtr->lensFlareInstance->setEnabled(false);
     this->dataPtr->removeLensFlare = false;
     this->dataPtr->lightName = "";
+    IGN_PROFILE_END();
     return;
   }
 
@@ -468,7 +473,10 @@ void LensFlare::Update()
     }
   }
   if (!directionalLight)
+  {
+    IGN_PROFILE_END();
     return;
+  }
 
   this->dataPtr->lightName = directionalLight->Name();
 
@@ -487,6 +495,7 @@ void LensFlare::Update()
   // listen for delete events to remove lens flare if light gets deleted.
   this->dataPtr->requestSub = this->dataPtr->node->Subscribe("~/request",
       &LensFlare::OnRequest, this);
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

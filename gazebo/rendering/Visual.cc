@@ -17,6 +17,8 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <ignition/common/Profiler.hh>
 #include <ignition/math/Helpers.hh>
 
 #include "gazebo/msgs/msgs.hh"
@@ -530,9 +532,13 @@ void Visual::Load()
 //////////////////////////////////////////////////
 void Visual::Update()
 {
+  IGN_PROFILE("rendering::Visual::Update");
+  IGN_PROFILE_BEGIN("Update");
   if (!this->dataPtr->visible)
+  {
+    IGN_PROFILE_END();
     return;
-
+  }
   std::list<DynamicLines*>::iterator iter;
 
   // Update the lines
@@ -567,6 +573,7 @@ void Visual::Update()
       // event::Events::DisconnectPreRender(this->preRenderConnection);
     }
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

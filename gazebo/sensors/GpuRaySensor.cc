@@ -673,10 +673,15 @@ void GpuRaySensor::PrerenderEnded()
 //////////////////////////////////////////////////
 void GpuRaySensor::Render()
 {
+  IGN_PROFILE("sensor::GpuRaySensor::Render");
+  IGN_PROFILE_BEGIN("Render");
   if (this->useStrictRate)
   {
     if (!this->dataPtr->renderNeeded)
+    {
+      IGN_PROFILE_END();
       return;
+    }
 
     this->dataPtr->laserCam->Render();
     this->dataPtr->rendered = true;
@@ -684,14 +689,17 @@ void GpuRaySensor::Render()
   }
   else
   {
-    if (!this->dataPtr->laserCam || !this->IsActive() || !this->NeedsUpdate())
+    if (!this->dataPtr->laserCam || !this->IsActive() || !this->NeedsUpdate()){
+      IGN_PROFILE_END();
       return;
+    }
 
     this->lastMeasurementTime = this->scene->SimTime();
 
     this->dataPtr->laserCam->Render();
     this->dataPtr->rendered = true;
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

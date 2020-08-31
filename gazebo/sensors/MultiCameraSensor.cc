@@ -319,10 +319,13 @@ void MultiCameraSensor::PrerenderEnded()
 //////////////////////////////////////////////////
 void MultiCameraSensor::Render()
 {
+  IGN_PROFILE("sensor::MultiCameraSensor::Render");
+  IGN_PROFILE_BEGIN("Render");
   if (this->useStrictRate)
   {
     if (!this->dataPtr->renderNeeded)
     {
+      IGN_PROFILE_END();
       return;
     }
 
@@ -330,6 +333,7 @@ void MultiCameraSensor::Render()
     std::lock_guard<std::mutex> lock(this->dataPtr->cameraMutex);
     if (this->dataPtr->cameras.empty())
     {
+      IGN_PROFILE_END();
       return;
     }
 
@@ -346,6 +350,7 @@ void MultiCameraSensor::Render()
   {
     if (!this->IsActive() || !this->NeedsUpdate())
     {
+      IGN_PROFILE_END();
       return;
     }
 
@@ -353,6 +358,7 @@ void MultiCameraSensor::Render()
     std::lock_guard<std::mutex> lock(this->dataPtr->cameraMutex);
     if (this->dataPtr->cameras.empty())
     {
+      IGN_PROFILE_END();
       return;
     }
 
@@ -365,6 +371,7 @@ void MultiCameraSensor::Render()
     this->dataPtr->rendered = true;
     this->lastMeasurementTime = this->scene->SimTime();
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

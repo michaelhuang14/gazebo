@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 #include <boost/filesystem.hpp>
 
+#include <ignition/common/Profiler.hh>
+
 #if defined(HAVE_OPENGL)
 
 #if defined(__APPLE__)
@@ -646,8 +648,13 @@ Ogre::PSSMShadowCameraSetup *RTShaderSystem::GetPSSMShadowCameraSetup() const
 /////////////////////////////////////////////////
 void RTShaderSystem::Update()
 {
+  IGN_PROFILE("rendering::RTShaderSystem::Update");
+  IGN_PROFILE_BEGIN("Update");
   if (!this->dataPtr->initialized || !this->dataPtr->updateShaders)
+  {
+    IGN_PROFILE_END();
     return;
+  }
 
   for (const auto &scene : this->dataPtr->scenes)
   {
@@ -658,6 +665,7 @@ void RTShaderSystem::Update()
     }
   }
   this->dataPtr->updateShaders = false;
+  IGN_PROFILE_END();
 }
 
 /////////////////////////////////////////////////

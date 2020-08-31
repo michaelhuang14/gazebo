@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <sstream>
+#include <ignition/common/Profiler.hh>
 #include <ignition/math/Color.hh>
 #include "gazebo/rendering/ogre_gazebo.h"
 
@@ -138,8 +139,11 @@ void DynamicLines::Clear()
 /////////////////////////////////////////////////
 void DynamicLines::Update()
 {
+  IGN_PROFILE("rendering::DynamicLines::Update");
+  IGN_PROFILE_BEGIN("Update");
   if (this->dirty && this->points.size() > 1)
     this->FillHardwareBuffers();
+  IGN_PROFILE_END();
 }
 
 /////////////////////////////////////////////////

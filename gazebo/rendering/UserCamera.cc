@@ -15,6 +15,7 @@
  *
 */
 #include <boost/bind.hpp>
+#include <ignition/common/Profiler.hh>
 #include <ignition/math/Color.hh>
 #include <ignition/math/Vector2.hh>
 
@@ -230,6 +231,8 @@ void UserCamera::SetWorldPose(const ignition::math::Pose3d &_pose)
 //////////////////////////////////////////////////
 void UserCamera::Update()
 {
+  IGN_PROFILE("rendering::UserCamera::Update");
+  IGN_PROFILE_BEGIN("Update");
   Camera::Update();
 
   if (this->dataPtr->viewController)
@@ -237,6 +240,7 @@ void UserCamera::Update()
 
   // publish camera pose
   this->dataPtr->posePub->Publish(msgs::Convert(this->WorldPose()));
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

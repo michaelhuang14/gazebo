@@ -16,6 +16,8 @@
 */
 #include <boost/bind.hpp>
 
+#include <ignition/common/Profiler.hh>
+
 #include "gazebo/common/MeshManager.hh"
 #include "gazebo/transport/transport.hh"
 
@@ -160,13 +162,18 @@ void WrenchVisual::Load(ConstJointPtr &_msg)
 /////////////////////////////////////////////////
 void WrenchVisual::Update()
 {
+  IGN_PROFILE("rendering::WrenchVisual::Update");
+  IGN_PROFILE_BEGIN("Update");
   WrenchVisualPrivate *dPtr =
       reinterpret_cast<WrenchVisualPrivate *>(this->dataPtr);
 
   boost::mutex::scoped_lock lock(dPtr->mutex);
 
   if (!dPtr->wrenchMsg || !dPtr->receivedMsg)
+  {
+    IGN_PROFILE_END();
     return;
+  }
 
   double magScale = 100;
   double vMax = 0.5;
@@ -201,6 +208,7 @@ void WrenchVisual::Update()
 
   dPtr->coneZVis->SetScale(ignition::math::Vector3d(0.02, 0.02, zScale));
   dPtr->coneZVis->SetPosition(ignition::math::Vector3d(0, 0, zScale * 0.5));
+  IGN_PROFILE_END();
 }
 
 /////////////////////////////////////////////////

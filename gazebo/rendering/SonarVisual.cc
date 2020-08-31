@@ -14,6 +14,8 @@
  * limitations under the License.
  *
 */
+#include <ignition/common/Profiler.hh>
+
 #include "gazebo/common/MeshManager.hh"
 #include "gazebo/transport/transport.hh"
 
@@ -85,19 +87,25 @@ void SonarVisual::OnMsg(ConstSonarStampedPtr &_msg)
 /////////////////////////////////////////////////
 void SonarVisual::Update()
 {
+  IGN_PROFILE("rendering::SonarVisual::Update");
+  IGN_PROFILE_BEGIN("Update");
   SonarVisualPrivate *dPtr =
       reinterpret_cast<SonarVisualPrivate *>(this->dataPtr);
 
   boost::mutex::scoped_lock lock(dPtr->mutex);
 
   if (!dPtr->sonarMsg || !dPtr->receivedMsg)
+  {
+    IGN_PROFILE_END();
     return;
+  }
 
   // Skip the update if the user is moving the sonar.
   if (this->GetScene()->SelectedVisual() &&
       this->GetRootVisual()->Name() ==
       this->GetScene()->SelectedVisual()->Name())
   {
+    IGN_PROFILE_END();
     return;
   }
 
@@ -165,4 +173,5 @@ void SonarVisual::Update()
           (rangeDelta * 0.5) - dPtr->sonarMsg->sonar().range()));
   }
   dPtr->receivedMsg = false;
+  IGN_PROFILE_END();
 }

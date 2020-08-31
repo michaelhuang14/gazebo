@@ -16,6 +16,8 @@
 */
 #include <boost/bind.hpp>
 
+#include <ignition/common/Profiler.hh>
+
 #include "gazebo/transport/transport.hh"
 #include "gazebo/rendering/Scene.hh"
 #include "gazebo/rendering/DynamicLines.hh"
@@ -88,6 +90,8 @@ void TransmitterVisual::OnNewPropagationGrid(ConstPropagationGridPtr &_msg)
 ////////////////////////////////////////////////
 void TransmitterVisual::Update()
 {
+  IGN_PROFILE("rendering::TransmitterVisual::Update");
+  IGN_PROFILE_BEGIN("Update");
   TransmitterVisualPrivate *dPtr =
       reinterpret_cast<TransmitterVisualPrivate *>(this->dataPtr);
 
@@ -96,7 +100,10 @@ void TransmitterVisual::Update()
   boost::mutex::scoped_lock lock(dPtr->mutex);
 
   if (!dPtr->gridMsg || !dPtr->receivedMsg)
+  {
+    IGN_PROFILE_END();
     return;
+  }
 
   // Update the visualization of the last propagation grid received
   dPtr->receivedMsg = false;
@@ -126,4 +133,5 @@ void TransmitterVisual::Update()
     ignition::math::Color color(strength, strength, strength);
     dPtr->points->SetColor(i, color);
   }
+  IGN_PROFILE_END();
 }

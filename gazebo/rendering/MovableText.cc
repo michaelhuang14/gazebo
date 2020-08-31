@@ -31,6 +31,8 @@
 
 #include <mutex>
 
+#include <ignition/common/Profiler.hh>
+
 #include "gazebo/common/common.hh"
 #include "gazebo/common/Assert.hh"
 #include "gazebo/rendering/MovableText.hh"
@@ -166,11 +168,14 @@ void MovableText::Load(const std::string &_name,
 //////////////////////////////////////////////////
 void MovableText::Update()
 {
+  IGN_PROFILE("rendering::MovableText::Update");
+  IGN_PROFILE_BEGIN("Update");
   if (this->dataPtr->dirty)
   {
     this->SetupGeometry();
     this->dataPtr->dirty = false;
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////

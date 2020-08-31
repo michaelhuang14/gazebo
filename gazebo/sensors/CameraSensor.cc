@@ -300,10 +300,15 @@ void CameraSensor::PrerenderEnded()
 //////////////////////////////////////////////////
 void CameraSensor::Render()
 {
+  IGN_PROFILE("sensor::CameraSensor::Render");
+  IGN_PROFILE_BEGIN("Render");
   if (this->useStrictRate)
   {
     if (!this->dataPtr->renderNeeded)
+    {
+      IGN_PROFILE_END();
       return;
+    }
 
     // Update all the cameras
     this->camera->Render();
@@ -313,8 +318,10 @@ void CameraSensor::Render()
   }
   else
   {
-    if (!this->camera || !this->IsActive() || !this->NeedsUpdate())
+    if (!this->camera || !this->IsActive() || !this->NeedsUpdate()){
+      IGN_PROFILE_END();
       return;
+    }
 
     // Update all the cameras
     this->camera->Render();
@@ -322,6 +329,7 @@ void CameraSensor::Render()
     this->dataPtr->rendered = true;
     this->lastMeasurementTime = this->scene->SimTime();
   }
+  IGN_PROFILE_END();
 }
 
 //////////////////////////////////////////////////
