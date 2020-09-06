@@ -162,6 +162,7 @@ namespace gazebo
 
       /// \brief Mutex to protect incoming message buffers.
       public: boost::recursive_mutex *receiveMutex;
+      public: boost::recursive_mutex *factoryMsgMutex;
 
       /// \brief Mutex to protext loading of models.
       public: boost::mutex *loadModelMutex;

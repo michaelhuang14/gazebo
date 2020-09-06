@@ -126,6 +126,7 @@ World::World(const std::string &_name)
   sdf::initFile("state.sdf", this->dataPtr->logPlayStateSDF);
 
   this->dataPtr->receiveMutex = new boost::recursive_mutex();
+  this->dataPtr->factoryMsgMutex = new boost::recursive_mutex();
   this->dataPtr->loadModelMutex = new boost::mutex();
 
   this->dataPtr->initialized = false;
@@ -925,6 +926,11 @@ void World::Fini()
     this->dataPtr->receiveMutex = nullptr;
   }
 
+  if (this->dataPtr->factoryMsgMutex)
+  {
+    delete this->dataPtr->factoryMsgMutex;
+    this->dataPtr->factoryMsgMutex = nullptr;
+  }
   if (this->dataPtr->loadModelMutex)
   {
     delete this->dataPtr->loadModelMutex;
@@ -1395,7 +1401,7 @@ void World::SetPaused(bool _p)
 //////////////////////////////////////////////////
 void World::OnFactoryMsg(ConstFactoryPtr &_msg)
 {
-  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->receiveMutex);
+  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->factoryMsgMutex);
   this->dataPtr->factoryMsgs.push_back(*_msg);
 }
 
@@ -1936,7 +1942,7 @@ void World::ProcessFactoryMsgs()
   std::list<sdf::ElementPtr> modelsToLoad, lightsToLoad;
 
   {
-    boost::recursive_mutex::scoped_lock lock(*this->dataPtr->receiveMutex);
+    boost::recursive_mutex::scoped_lock lock(*this->dataPtr->factoryMsgMutex);
     for (auto const &factoryMsg : this->dataPtr->factoryMsgs)
     {
       this->dataPtr->factorySDF->Root()->ClearElements();
@@ -2279,7 +2285,7 @@ void World::SetState(const WorldState &_state)
 //////////////////////////////////////////////////
 void World::InsertModelFile(const std::string &_sdfFilename)
 {
-  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->receiveMutex);
+  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->factoryMsgMutex);
   msgs::Factory msg;
   msg.set_sdf_filename(_sdfFilename);
   this->dataPtr->factoryMsgs.push_back(msg);
@@ -2288,7 +2294,7 @@ void World::InsertModelFile(const std::string &_sdfFilename)
 //////////////////////////////////////////////////
 void World::InsertModelSDF(const sdf::SDF &_sdf)
 {
-  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->receiveMutex);
+  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->factoryMsgMutex);
   msgs::Factory msg;
   msg.set_sdf(_sdf.ToString());
   this->dataPtr->factoryMsgs.push_back(msg);
@@ -2297,7 +2303,7 @@ void World::InsertModelSDF(const sdf::SDF &_sdf)
 //////////////////////////////////////////////////
 void World::InsertModelString(const std::string &_sdfString)
 {
-  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->receiveMutex);
+  boost::recursive_mutex::scoped_lock lock(*this->dataPtr->factoryMsgMutex);
   msgs::Factory msg;
   msg.set_sdf(_sdfString);
   this->dataPtr->factoryMsgs.push_back(msg);
