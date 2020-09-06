@@ -59,6 +59,7 @@ set (sources ${sources}
   Gripper.cc
   HeightmapShape.cc
   Inertial.cc
+  InstancedActor.cc
   Joint.cc
   JointController.cc
   JointState.cc

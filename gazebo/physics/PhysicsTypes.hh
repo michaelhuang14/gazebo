@@ -38,6 +38,7 @@ namespace gazebo
     class World;
     class Model;
     class Actor;
+    class InstancedActor;
     class Light;
     class Link;
     class Collision;
@@ -95,6 +96,7 @@ namespace gazebo
     /// \def Actor
     /// \brief Boost shared pointer to an Actor object
     typedef boost::shared_ptr<Actor> ActorPtr;
+    typedef boost::shared_ptr<InstancedActor> InstancedActorPtr;
 
     /// \def TrajectoryInfoPtr
     /// \brief Shared pointer to a TrajectoryInfo object
@@ -207,6 +209,7 @@ namespace gazebo
     /// \def Actor_V
     /// \brief Vector of ActorPtr
     typedef std::vector<ActorPtr> Actor_V;
+    typedef std::vector<InstancedActorPtr> InstancedActor_V;
 
     /// \def Joint_V
     /// \brief Vector of JointPtr

@@ -1125,7 +1125,11 @@ namespace gazebo
         msgs::Set(result.mutable_pose(),
             _sdf->Get<ignition::math::Pose3d>("pose"));
       }
-
+     if(_sdf->HasElement("animation")){
+       sdf::ElementPtr visualAnimSdf = _sdf->GetElement("animation");
+       std::string animName=visualAnimSdf->GetAttribute("name")->GetAsString();
+       result.set_animation(animName);
+      }
       // Set plugins of the visual
       if (_sdf->HasElement("plugin"))
       {
@@ -1554,6 +1558,10 @@ namespace gazebo
       {
         sdf::ElementPtr pluginElem = visualSDF->AddElement("plugin");
         pluginElem = PluginToSDF(_msg.plugin(i), pluginElem);
+      }
+      if (_msg.has_animation())
+      {
+        visualSDF->GetElement("animation")->GetAttribute("name")->Set(_msg.animation());
       }
 
       return visualSDF;

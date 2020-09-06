@@ -445,6 +445,8 @@ namespace gazebo
                   const std::string &_subMesh = "",
                   bool _centerSubmesh = false);
 
+      public: static void InsertOgreMesh(const std::string &_meshName,
+                     const std::string &_subMesh, bool _centerSubmesh);
       /// \brief Insert a mesh into Ogre.
       /// \param[in] _mesh Pointer to the mesh to insert.
       /// \param[in] _subMesh Name of the mesh within _meshName to insert.

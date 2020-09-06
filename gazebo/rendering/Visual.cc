@@ -380,7 +380,29 @@ void Visual::Load()
   if (ent)
   {
     if (ent->hasSkeleton())
+    {
+      // !FIXME Assign random texture
+      int i = (int)Ogre::Math::RangeRandom(0,14);
+      if (i > 13)
+        i = 13;
+      ent->setMaterialName("GameChar_Male_Mat_"+Ogre::StringConverter::toString(i));
+				
       this->dataPtr->skeleton = ent->getSkeleton();
+      if (this->dataPtr->sdf->HasElement("animation"))
+      {
+         sdf::ElementPtr animSdf = this->dataPtr->sdf->GetElement("animation");
+         std::string animName = animSdf->GetAttribute("name")->GetAsString();
+         this->dataPtr->animState=ent->getAnimationState(animName);
+         this->dataPtr->animState->setTimePosition(0);
+         this->dataPtr->animState->setEnabled(true);
+		 this->dataPtr->animState->setLoop(true);
+		 this->dataPtr->prevAnimTime = common::Time::GetWallTime();
+
+         this->dataPtr->preRenderConnection =
+             event::Events::ConnectPreRender(boost::bind(&Visual::Update, this));
+
+      }
+    } 
 
     for (unsigned int i = 0; i < ent->getNumSubEntities(); i++)
     {
@@ -2041,6 +2063,11 @@ void Visual::InsertMesh(const std::string &_meshName,
                         const std::string &_subMesh,
                         bool _centerSubmesh)
 {
+  if(_meshName.rfind(".mesh")==_meshName.size()-5)
+  {
+    InsertOgreMesh(_meshName, _subMesh, _centerSubmesh);
+    return;
+  }
   const common::Mesh *mesh;
   if (!common::MeshManager::Instance()->HasMesh(_meshName))
   {
@@ -2067,7 +2094,19 @@ void Visual::InsertMesh(const std::string &_meshName,
     this->InsertMesh(mesh);
   }*/
 }
+void Visual::InsertOgreMesh(const std::string &_meshName, const std::string &_subMesh,
+    bool _centerSubmesh)
+{
+  // Don't re-add existing meshes
+  if (Ogre::MeshManager::getSingleton().resourceExists(_meshName))
+  {
+    return;
+  }
+  boost::filesystem::path p(_meshName);
+  RenderEngine::Instance()->AddResourcePath(p.parent_path().generic_string());
+  Ogre::MeshManager::getSingleton().load( _meshName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME );
 
+}
 //////////////////////////////////////////////////
 void Visual::InsertMesh(const common::Mesh *_mesh, const std::string &_subMesh,
     bool _centerSubmesh)
@@ -2360,8 +2399,14 @@ void Visual::UpdateFromMsg(const boost::shared_ptr< msgs::Visual const> &_msg)
     std::string geometryName = this->GetMeshName();
 
     std::string newGeometryName = geometryName;
+    
     if (_msg->geometry().has_mesh() && _msg->geometry().mesh().has_filename())
-        newGeometryName = common::find_file(_msg->geometry().mesh().filename());
+    {
+      newGeometryName = common::find_file(_msg->geometry().mesh().filename());
+    }else
+    {
+      gzwarn<<"no filename for mesh"<<"\n";
+    }
 
     if (newGeometryType != geometryType ||
         (newGeometryType == "mesh" && newGeometryName != geometryName))

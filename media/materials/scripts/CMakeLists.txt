@@ -6,6 +6,8 @@ deferred_post.material
 deferred_post_minilight.material
 deferred_post.program
 distortion.compositor
+Examples.program
+GameChar_Male.material
 gazebo.material
 grid.material
 kitchen.material

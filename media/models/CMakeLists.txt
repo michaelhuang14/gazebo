@@ -1,4 +1,6 @@
 set (files
+        Gamechar-male.mesh
+        Gamechar-male.skeleton
 	moonwalk.dae
 	run.dae
 	sit_down.dae

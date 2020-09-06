@@ -475,7 +475,7 @@ namespace gazebo
       /// \param[in] _parent Parent of the Actor.
       /// \return Pointer to the newly created Actor.
       private: ActorPtr LoadActor(sdf::ElementPtr _sdf, BasePtr _parent);
-
+      private: InstancedActorPtr LoadInstancedActor(sdf::ElementPtr _sdf, BasePtr _parent);
       /// \brief Load a road.
       /// \param[in] _sdf SDF element containing the Road description.
       /// \param[in] _parent Parent of the Road.

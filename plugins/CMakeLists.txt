@@ -61,6 +61,7 @@ set (plugins_single_header
   HarnessPlugin
   ImuSensorPlugin
   InitialVelocityPlugin
+  InstancedActorPlugin
   JointTrajectoryPlugin
   LiftDragPlugin
   LinearBatteryConsumerPlugin

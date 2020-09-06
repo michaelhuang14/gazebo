@@ -24,10 +24,10 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <ignition/math/Kmeans.hh>
 #include <sdf/sdf.hh>
 #include "gazebo/common/Assert.hh"
 #include "gazebo/common/Console.hh"
+#include "gazebo/math/Kmeans.hh"
 #include "gazebo/math/Pose.hh"
 #include "gazebo/math/Rand.hh"
 #include "gazebo/physics/Population.hh"
@@ -75,7 +75,7 @@ bool Population::PopulateAll()
 //////////////////////////////////////////////////
 bool Population::PopulateOne(const sdf::ElementPtr _population)
 {
-  std::vector<math::Vector3> objects;
+  std::vector<math::Pose> objects;
   PopulationParams params;
 
   GZ_ASSERT(_population, "'_population' parameter is NULL");
@@ -109,29 +109,50 @@ bool Population::PopulateOne(const sdf::ElementPtr _population)
 
   // Create an sdf containing the model description.
   sdf::SDF sdf;
-  sdf.SetFromString("<sdf version ='1.5'>" + params.modelSdf + "</sdf>");
-
+  sdf.SetFromString("<sdf version ='1.6'>" + params.modelSdf + "</sdf>");
   for (size_t i = 0; i < objects.size(); ++i)
   {
-    math::Vector3 p(objects[i].x, objects[i].y, objects[i].z);
+    math::Pose p=objects[i];
 
-    // Create a unique model for each clone.
+    // Create a unique actor for each clone.
     std::string cloneSdf = sdf.ToString();
-    std::string delim = "model name='";
+    std::string delim = "instanced_actor name='";
+    bool isInstancedActor=true;
+    if(cloneSdf.find(delim)==std::string::npos)
+    {
+      isInstancedActor=false;
+      delim = "model name='"; 
+    } 
     size_t first = cloneSdf.find(delim) + delim.size();
     size_t last = cloneSdf.find("'", first);
     std::string newName = params.modelName + std::string("_clone_") +
       boost::lexical_cast<std::string>(i);
     cloneSdf.replace(first, last - first, newName);
 
+  // Create a unique plugin for each clone.
+    if(isInstancedActor){
+    std::string delimPlugin = "plugin name='";
+    size_t firstPlugin = cloneSdf.find(delimPlugin);
+    if(firstPlugin>=0){
+	    firstPlugin+=delimPlugin.size();
+	    size_t lastPlugin = cloneSdf.find("'", firstPlugin);
+	    std::string newPluginName = params.modelName + std::string("_plug_clone_") +
+	      boost::lexical_cast<std::string>(i);
+	    cloneSdf.replace(firstPlugin, lastPlugin - firstPlugin, newPluginName);
+    }
+    }
+
     // Insert the <pose> element.
     std::string endDelim = "'>";
     first = cloneSdf.find(delim) + delim.size();
     last = cloneSdf.find(endDelim, first);
     std::string pose = "\n    <pose>" +
-      boost::lexical_cast<std::string>(p.x) + " " +
-      boost::lexical_cast<std::string>(p.y) + " " +
-      boost::lexical_cast<std::string>(p.z) + " 0 0 0</pose>";
+      boost::lexical_cast<std::string>(p.pos.x) + " " +
+      boost::lexical_cast<std::string>(p.pos.y) + " " +
+      boost::lexical_cast<std::string>(p.pos.z) + " " +
+      boost::lexical_cast<std::string>(p.rot.GetRoll()) + " " +
+      boost::lexical_cast<std::string>(p.rot.GetPitch()) + " " +
+      boost::lexical_cast<std::string>(p.rot.GetYaw()) + "</pose>";
     cloneSdf.insert(last + endDelim.size(), pose);
 
     this->dataPtr->world->InsertModelString(cloneSdf);
@@ -149,8 +170,6 @@ bool Population::ElementFromSdf(const sdf::ElementPtr &_sdfElement,
     _value = _sdfElement->GetElement(_element);
     return true;
   }
-  gzerr << "Unable to find <" << _element << "> inside the population tag"
-        << std::endl;
   return false;
 }
 
@@ -162,8 +181,13 @@ bool Population::ParseSdf(sdf::ElementPtr _population,
 
   // Read the model element.
   sdf::ElementPtr model;
-  if (!this->ElementFromSdf(_population, "model", model))
+  if ((!this->ElementFromSdf(_population, "model", model))
+      && (!this->ElementFromSdf(_population, "instanced_actor", model)))
+  {
+    gzerr << "Unable to find model or instanced actor inside the population tag"
+        << std::endl;
     return false;
+  }
 
   _params.modelSdf = model->ToString("");
   _params.modelName = model->Get<std::string>("name");
@@ -325,7 +349,7 @@ bool Population::ParseSdf(sdf::ElementPtr _population,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesBoxRandom(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
@@ -333,12 +357,13 @@ void Population::CreatePosesBoxRandom(const PopulationParams &_populParams,
   _poses.clear();
   for (int i = 0; i < _populParams.modelCount; ++i)
   {
-    math::Pose offset(math::Rand::GetDblUniform(0, _populParams.size.x),
+    math::Vector3 offset(math::Rand::GetDblUniform(0, _populParams.size.x),
                       math::Rand::GetDblUniform(0, _populParams.size.y),
-                      math::Rand::GetDblUniform(0, _populParams.size.z),
-                      0, 0, 0);
+                      0);
+    math::Pose pose=_populParams.pose;
+    pose.pos +=offset;
 
-    _poses.push_back((offset + _populParams.pose).pos);
+    _poses.push_back(pose);
   }
 
   // Check that we have generated the appropriate number of poses.
@@ -348,24 +373,24 @@ void Population::CreatePosesBoxRandom(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesBoxUniform(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
 
-  std::vector<ignition::math::Vector3d> obs;
+  std::vector<math::Vector3> obs;
 
   // Step1: Sample points in a box.
   double x = 0.0;
   double y = 0.0;
-  while (y < _populParams.size.Ign().Y())
+  while (y < _populParams.size.y)
   {
-    while (x < _populParams.size.Ign().X())
+    while (x < _populParams.size.x)
     {
-      ignition::math::Vector3d p;
-      p.X(x);
-      p.Y(y);
-      p.Z(math::Rand::GetDblUniform(0, _populParams.size.z));
+      math::Vector3 p;
+      p.x = x;
+      p.y = y;
+      p.z = 0;
       obs.push_back(p);
       x += .1;
     }
@@ -374,18 +399,17 @@ void Population::CreatePosesBoxUniform(const PopulationParams &_populParams,
   }
 
   // Step2: Cluster the sampled points in 'modelCount' clusters.
-  std::vector<ignition::math::Vector3d> centroids;
+  std::vector<math::Vector3> centroids;
   std::vector<unsigned int> labels;
-  ignition::math::Kmeans kmeans(obs);
+  math::Kmeans kmeans(obs);
   kmeans.Cluster(_populParams.modelCount, centroids, labels);
 
   // Step3: Create the list of object positions.
   _poses.clear();
   for (int i = 0; i < _populParams.modelCount; ++i)
   {
-    ignition::math::Pose3d p(centroids[i],
-                             ignition::math::Quaterniond::Identity);
-    _poses.push_back((p + _populParams.pose.Ign()).Pos());
+    math::Pose p(centroids[i], math::Quaternion(0, 0, 0));
+    _poses.push_back(p + _populParams.pose);
   }
 
   // Check that we have generated the appropriate number of poses.
@@ -395,7 +419,7 @@ void Population::CreatePosesBoxUniform(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesBoxGrid(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
@@ -406,7 +430,7 @@ void Population::CreatePosesBoxGrid(const PopulationParams &_populParams,
   {
     for (int j = 0; j < _populParams.cols; ++j)
     {
-      _poses.push_back((offset + _populParams.pose).pos);
+      _poses.push_back(offset + _populParams.pose);
       offset.pos.x += _populParams.step.x;
     }
     offset.pos.x = 0;
@@ -421,7 +445,7 @@ void Population::CreatePosesBoxGrid(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesBoxLinearX(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
@@ -430,12 +454,12 @@ void Population::CreatePosesBoxLinearX(const PopulationParams &_populParams,
   _poses.clear();
   math::Pose offset = math::Pose::Zero;
   offset.pos.y = _populParams.size.y / 2.0;
-  offset.pos.z = _populParams.size.z / 2.0;
+  offset.pos.z = 0;
   for (int i = 0; i < _populParams.modelCount; ++i)
   {
     offset.pos.x =
       _populParams.size.x * i / static_cast<double>(_populParams.modelCount);
-    _poses.push_back((offset + _populParams.pose).pos);
+    _poses.push_back(offset + _populParams.pose);
   }
 
   // Check that we have generated the appropriate number of poses.
@@ -445,7 +469,7 @@ void Population::CreatePosesBoxLinearX(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesBoxLinearY(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
@@ -454,12 +478,12 @@ void Population::CreatePosesBoxLinearY(const PopulationParams &_populParams,
   _poses.clear();
   math::Pose offset = math::Pose::Zero;
   offset.pos.x = _populParams.size.x / 2.0;
-  offset.pos.z = _populParams.size.z / 2.0;
+  offset.pos.z = 0;
   for (int i = 0; i < _populParams.modelCount; ++i)
   {
     offset.pos.y =
       _populParams.size.y * i / static_cast<double>(_populParams.modelCount);
-    _poses.push_back((offset + _populParams.pose).pos);
+    _poses.push_back(offset + _populParams.pose);
   }
 
   // Check that we have generated the appropriate number of poses.
@@ -469,7 +493,7 @@ void Population::CreatePosesBoxLinearY(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesBoxLinearZ(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
@@ -483,7 +507,7 @@ void Population::CreatePosesBoxLinearZ(const PopulationParams &_populParams,
   {
     offset.pos.z =
       _populParams.size.z * i / static_cast<double>(_populParams.modelCount);
-    _poses.push_back((offset + _populParams.pose).pos);
+    _poses.push_back(offset + _populParams.pose);
   }
 
   // Check that we have generated the appropriate number of poses.
@@ -493,7 +517,7 @@ void Population::CreatePosesBoxLinearZ(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesCylinderRandom(const PopulationParams &_populParams,
-  std::vector<math::Vector3> &_poses)
+  std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
@@ -506,8 +530,8 @@ void Population::CreatePosesCylinderRandom(const PopulationParams &_populParams,
     math::Pose offset = math::Pose::Zero;
     offset.pos.x = r * cos(ang);
     offset.pos.y = r * sin(ang);
-    offset.pos.z = math::Rand::GetDblUniform(0, _populParams.length);
-    _poses.push_back((offset + _populParams.pose).pos);
+    offset.pos.z = 0;
+    _poses.push_back(offset + _populParams.pose);
   }
 
   // Check that we have generated the appropriate number of poses.
@@ -517,12 +541,12 @@ void Population::CreatePosesCylinderRandom(const PopulationParams &_populParams,
 
 /////////////////////////////////////////////////
 void Population::CreatePosesCylinderUniform(
-  const PopulationParams &_populParams, std::vector<math::Vector3> &_poses)
+  const PopulationParams &_populParams, std::vector<math::Pose> &_poses)
 {
   // _poses should be empty.
   GZ_ASSERT(_poses.empty(), "Output parameter '_poses' is not empty");
 
-  std::vector<ignition::math::Vector3d> obs;
+  std::vector<math::Vector3> obs;
 
   // Step1: Sample points in the cylinder.
   unsigned int points = 10000;
@@ -530,26 +554,26 @@ void Population::CreatePosesCylinderUniform(
   {
     double ang = math::Rand::GetDblUniform(0, 2 * M_PI);
     double r = math::Rand::GetDblUniform(0, _populParams.radius);
-    ignition::math::Vector3d p;
-    p.X(r * cos(ang));
-    p.Y(r * sin(ang));
-    p.Z(math::Rand::GetDblUniform(0, _populParams.length));
+    math::Vector3 p;
+    p.x = r * cos(ang);
+    p.y = r * sin(ang);
+    p.z = math::Rand::GetDblUniform(0, _populParams.length);
     obs.push_back(p);
   }
 
   // Step2: Cluster the sampled points in 'modelCount' clusters.
-  std::vector<ignition::math::Vector3d> centroids;
+  std::vector<math::Vector3> centroids;
   std::vector<unsigned int> labels;
-  ignition::math::Kmeans kmeans(obs);
+  math::Kmeans kmeans(obs);
   kmeans.Cluster(_populParams.modelCount, centroids, labels);
 
   // Step3: Create the list of object positions.
   _poses.clear();
-  ignition::math::Pose3d offset = ignition::math::Pose3d::Zero;
+  math::Pose offset = math::Pose::Zero;
   for (int i = 0; i < _populParams.modelCount; ++i)
   {
-    offset.Pos() = centroids[i];
-    _poses.push_back((offset + _populParams.pose.Ign()).Pos());
+    offset.pos = centroids[i];
+    _poses.push_back(offset + _populParams.pose);
   }
 
   // Check that we have generated the appropriate number of poses.

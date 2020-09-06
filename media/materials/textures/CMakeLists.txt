@@ -10,6 +10,10 @@ set (files
   flat_normal.png
   fungus_diffusespecular.png
   fungus_normal.png
+  gameTex_0.png
+  gameTex_11.png  gameTex_13.png  gameTex_2.png  gameTex_4.png  gameTex_6.png  gameTex_8.png
+  gameTex_10.png  gameTex_12.png  gameTex_1.png   gameTex_3.png  gameTex_5.png  gameTex_7.png  gameTex_9.png
+
   granite2.jpg
   granite.jpg
   grass_diffusespecular.png

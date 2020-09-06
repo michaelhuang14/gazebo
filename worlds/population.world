@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
-  <world name="default">
+  <world name='default'>
     <!-- A global light source -->
     <include>
       <uri>model://sun</uri>
@@ -11,8 +11,8 @@
     </include>
 
     <!-- Testing the automatic population of objects -->
-    <population name="can_population1">
-      <model name="can1">
+    <population name='can_population1'>
+      <model name='can1'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -27,8 +27,8 @@
       </distribution>
     </population>
 
-    <population name="can_population2">
-      <model name="can2">
+    <population name='can_population2'>
+      <model name='can2'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -42,8 +42,8 @@
       </distribution>
     </population>
 
-    <population name="can_population3">
-      <model name="can3">
+    <population name='can_population3'>
+      <model name='can3'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -59,8 +59,8 @@
       </distribution>
     </population>
 
-    <population name="can_population4">
-      <model name="can4">
+    <population name='can_population4'>
+      <model name='can4'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -75,8 +75,8 @@
       </distribution>
     </population>
 
-    <population name="can_population5">
-      <model name="can5">
+    <population name='can_population5'>
+      <model name='can5'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -92,8 +92,8 @@
       </distribution>
     </population>
 
-    <population name="can_population6">
-      <model name="can6">
+    <population name='can_population6'>
+      <model name='can6'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -108,8 +108,8 @@
       </distribution>
     </population>
 
-    <population name="can_population7">
-      <model name="can7">
+    <population name='can_population7'>
+      <model name='can7'>
         <include>
           <uri>model://coke_can</uri>
         </include>
@@ -124,8 +124,8 @@
       </distribution>
     </population>
 
-    <population name="can_population8">
-      <model name="can8">
+    <population name='can_population8'>
+      <model name='can8'>
         <static>true</static>
         <include>
           <uri>model://coke_can</uri>

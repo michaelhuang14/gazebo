@@ -13,6 +13,7 @@ depth_points_map.frag
 depth_points_map.vert
 directional_shadow_receiver_fp.glsl
 directional_shadow_receiver_vp.glsl
+Example_Basic.cg
 grid_fp.glsl
 grid_vp.glsl
 laser_1st_pass_dbg.frag

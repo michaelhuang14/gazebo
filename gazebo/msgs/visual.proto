@@ -67,4 +67,5 @@ message Visual
 
   /// \brief Type of visual.
   optional Type type           = 17;
+  optional string animation           = 18;
 }

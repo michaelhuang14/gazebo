@@ -79,6 +79,7 @@
 #include "gazebo/physics/Model.hh"
 #include "gazebo/physics/Light.hh"
 #include "gazebo/physics/Actor.hh"
+#include "gazebo/physics/InstancedActor.hh"
 #include "gazebo/physics/Wind.hh"
 #include "gazebo/physics/WorldPrivate.hh"
 #include "gazebo/physics/World.hh"
@@ -1158,7 +1159,21 @@ ActorPtr World::LoadActor(sdf::ElementPtr _sdf , BasePtr _parent)
 
   return actor;
 }
+//////////////////////////////////////////////////
+InstancedActorPtr World::LoadInstancedActor(sdf::ElementPtr _sdf , BasePtr _parent)
+{
+  InstancedActorPtr actor(new InstancedActor(_parent));
+  actor->SetWorld(shared_from_this());
+  actor->Load(_sdf);
 
+  event::Events::addEntity(actor->GetScopedName());
+
+  msgs::Model msg;
+  actor->FillMsg(msg);
+  this->dataPtr->modelPub->Publish(msg);
+
+  return actor;
+}
 //////////////////////////////////////////////////
 RoadPtr World::LoadRoad(sdf::ElementPtr _sdf , BasePtr _parent)
 {
@@ -1207,7 +1222,17 @@ void World::LoadEntities(sdf::ElementPtr _sdf, BasePtr _parent)
       childElem = childElem->GetNextElement("actor");
     }
   }
+  if (_sdf->HasElement("instanced_actor"))
+  {
+    sdf::ElementPtr childElem = _sdf->GetElement("instanced_actor");
 
+    while (childElem)
+    {
+      this->LoadInstancedActor(childElem, _parent);
+
+      childElem = childElem->GetNextElement("instanced_actor");
+    }
+  }
   if (_sdf->HasElement("road"))
   {
     sdf::ElementPtr childElem = _sdf->GetElement("road");
@@ -2014,6 +2039,7 @@ void World::ProcessFactoryMsgs()
         bool isActor = false;
         bool isModel = false;
         bool isLight = false;
+        bool isInstancedActor=false;
 
         sdf::ElementPtr elem = this->dataPtr->factorySDF->Root()->Clone();
 
@@ -2042,6 +2068,11 @@ void World::ProcessFactoryMsgs()
           elem = elem->GetElement("actor");
           isActor = true;
         }
+        else if (elem->HasElement("instanced_actor"))
+        {
+          elem = elem->GetElement("instanced_actor");
+          isInstancedActor = true;
+        }
         else
         {
           gzerr << "Unable to find a model, light, or actor in:\n";
@@ -2055,8 +2086,12 @@ void World::ProcessFactoryMsgs()
         {
           elem->GetElement("pose")->Set(msgs::ConvertIgn(factoryMsg.pose()));
         }
-
-        if (isActor)
+        if (isInstancedActor)
+        {
+          InstancedActorPtr iactor = this->LoadInstancedActor(elem, this->dataPtr->rootElement);
+          iactor->Init();
+          iactor->LoadPlugins();
+        }else if (isActor)
         {
           ActorPtr actor = this->LoadActor(elem, this->dataPtr->rootElement);
           actor->Init();
@@ -2463,7 +2498,9 @@ void World::ProcessMessages()
         }
 
         if (this->dataPtr->posePub && this->dataPtr->posePub->HasConnections())
-          this->dataPtr->posePub->Publish(msg);
+        {
+           this->dataPtr->posePub->Publish(msg);
+        }
       }
 
       if (this->dataPtr->poseLocalPub &&
